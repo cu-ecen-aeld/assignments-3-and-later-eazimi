@@ -34,7 +34,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    int wrc = write(pfd, writestr, strlen(writestr));
+    write(pfd, writestr, strlen(writestr));
     syslog(LOG_DEBUG, "Writing \"%s\" to \"%s\"", writestr, writefile);
     close(pfd);
 
