@@ -1,5 +1,10 @@
 #include "systemcalls.h"
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -44,6 +49,7 @@ bool do_exec(int count, ...)
     va_start(args, count);
     char * command[count+1];
     int i;
+
     for(i=0; i<count; i++)
     {
         command[i] = va_arg(args, char *);
@@ -62,6 +68,28 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    pid_t pid = fork();
+    if(pid == 0)
+    {
+        int rc = execv(command[0], command);
+        if (rc < 0)
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    pid_t w;
+    do
+    {
+        int status;
+        w = waitpid(pid, &status, WNOHANG);
+        if(w == -1)
+            return false;
+        if(w == 0)
+            usleep(500);            
+        else if(WIFEXITED(status) && (WEXITSTATUS(status) == EXIT_FAILURE))
+            return false;
+    } while (w == 0);    
 
     va_end(args);
 
