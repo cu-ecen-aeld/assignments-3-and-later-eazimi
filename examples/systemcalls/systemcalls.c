@@ -78,21 +78,14 @@ bool do_exec(int count, ...)
         }
     }
 
-    pid_t w;
-    do
-    {
-        int status;
-        w = waitpid(pid, &status, WNOHANG);
-        if(w == -1)
-            return false;
-        if(w == 0)
-            usleep(500);            
-        else if(WIFEXITED(status) && (WEXITSTATUS(status) == EXIT_FAILURE))
-            return false;
-    } while (w == 0);    
-
+    int status;
+    pid_t w = waitpid(pid, &status, 0);
+    if (w == -1)
+        return false;
+    if (WIFEXITED(status) && (WEXITSTATUS(status) == EXIT_FAILURE))
+        return false; 
+        
     va_end(args);
-
     return true;
 }
 
