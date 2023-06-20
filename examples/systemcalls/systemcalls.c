@@ -84,7 +84,7 @@ bool do_exec(int count, ...)
         return false;
     if (WIFEXITED(status) && (WEXITSTATUS(status) == EXIT_FAILURE))
         return false; 
-        
+
     va_end(args);
     return true;
 }
@@ -117,6 +117,38 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    int fd = open(outputfile, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+    if (fd < 0)
+    {
+        perror("open");
+        abort();
+    }
+
+    pid_t pid = fork();
+    if (pid == 0)
+    {
+        if (dup2(fd, 1) < 0)
+        {
+            perror("dup2");
+            exit(EXIT_FAILURE);
+        }
+        close(fd);
+
+        int rc = execv(command[0], command);
+        if (rc < 0)
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+    
+    close(fd);
+
+    int status;
+    pid_t w = waitpid(pid, &status, 0);
+    if (w == -1)
+        return false;
+    if (WIFEXITED(status) && (WEXITSTATUS(status) == EXIT_FAILURE))
+        return false;
 
     va_end(args);
 
