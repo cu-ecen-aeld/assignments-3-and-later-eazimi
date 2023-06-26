@@ -59,11 +59,11 @@ fi
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
-# if [ -d "${OUTDIR}/rootfs" ]
-# then
-# 	echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
-#     sudo rm  -rf ${OUTDIR}/rootfs
-# fi
+if [ -d "${OUTDIR}/rootfs" ]
+then
+	echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
+    sudo rm  -rf ${OUTDIR}/rootfs
+fi
 
 # TODO: Create necessary base directories
 ROOTFS=${OUTDIR}/rootfs
@@ -84,8 +84,8 @@ else
 fi
 
 # TODO: Make and install busybox
-# make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-# make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
+make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
+make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
 PROG_INTERPRETER=$(${CROSS_COMPILE}readelf -a ${ROOTFS}/bin/busybox | grep "program interpreter")
 PROG_INTERPRETER=$(echo ${PROG_INTERPRETER} | sed 's/.*\/\(.*\)\]/\1/')
