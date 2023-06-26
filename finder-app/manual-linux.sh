@@ -107,6 +107,10 @@ sudo cp ${LIBC} ${ROOTFS}/lib64/
 sudo cp ${LIBM} ${ROOTFS}/lib64/
 
 # TODO: Make device nodes
+rm -f ${ROOTFS}/dev/null
+rm -f ${ROOTFS}/dev/console
+sudo mknod -m 666 ${ROOTFS}/dev/null c 1 3
+sudo mknod -m 666 ${ROOTFS}/dev/console c 5 1 
 
 # TODO: Clean and build the writer utility
 
