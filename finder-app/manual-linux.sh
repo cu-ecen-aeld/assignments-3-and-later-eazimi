@@ -12,10 +12,10 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
-INTRPRTR="/var/lib/docker/overlay2/e1b53b70d0542d3203c44d2175bb8e367a0c6f304ecfef506b0f183092f72ca8/diff/usr/local/arm-cross-compiler/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1"
-LIBRESOLV="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libresolv.so.2"
-LIBC="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libc.so.6"
-LIBM="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libm.so.6"
+INTRPRTR="${OUTDIR}/dep/ld-linux-aarch64.so.1"
+LIBRESOLV="${OUTDIR}/dep/x86_64-linux-gnu/libresolv.so.2"
+LIBC="${OUTDIR}/dep/x86_64-linux-gnu/libc.so.6"
+LIBM="${OUTDIR}/dep/x86_64-linux-gnu/libm.so.6"
 CUR_DIR=$PWD
 
 if [ $# -lt 1 ]
