@@ -120,6 +120,7 @@ sudo cp writer ${ROOTFS}/home
 
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
+sudo cp finder.sh finder-test.sh ../conf/username.txt ${ROOTFS}/home   
 
 # TODO: Chown the root directory
 
