@@ -98,17 +98,17 @@ done <<< ${SHARED_LIB}
 
 # TODO: Add library dependencies to rootfs
 if [ -f ${ROOTFS}/lib/${PROG_INTERPRETER} ]; then
-    rm -f ${ROOTFS}/lib/${PROG_INTERPRETER}
+    sudo rm -f ${ROOTFS}/lib/${PROG_INTERPRETER}
 fi
 sudo cp ${INTRPRTR} ${ROOTFS}/lib
-rm -f ${ROOTFS}/lib64/*.*
+sudo rm -f ${ROOTFS}/lib64/*.*
 sudo cp ${LIBRESOLV} ${ROOTFS}/lib64/
 sudo cp ${LIBC} ${ROOTFS}/lib64/ 
 sudo cp ${LIBM} ${ROOTFS}/lib64/
 
 # TODO: Make device nodes
-rm -f ${ROOTFS}/dev/null
-rm -f ${ROOTFS}/dev/console
+sudo rm -f ${ROOTFS}/dev/null
+sudo rm -f ${ROOTFS}/dev/console
 sudo mknod -m 666 ${ROOTFS}/dev/null c 1 3
 sudo mknod -m 666 ${ROOTFS}/dev/console c 5 1 
 
@@ -127,3 +127,6 @@ sudo cp autorun-qemu.sh ${ROOTFS}/home
 sudo chown -R root:root ${ROOTFS}
 
 # TODO: Create initramfs.cpio.gz
+cd ${ROOTFS}
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+gzip -f ${OUTDIR}/initramfs.cpio
