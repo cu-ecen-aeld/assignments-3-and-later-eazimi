@@ -124,5 +124,6 @@ sudo cp finder.sh finder-test.sh ../conf/username.txt ${ROOTFS}/home
 sudo cp autorun-qemu.sh ${ROOTFS}/home   
 
 # TODO: Chown the root directory
+sudo chown -R root:root ${ROOTFS}
 
 # TODO: Create initramfs.cpio.gz
