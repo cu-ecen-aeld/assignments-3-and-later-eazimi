@@ -16,6 +16,7 @@ INTRPRTR="/var/lib/docker/overlay2/e1b53b70d0542d3203c44d2175bb8e367a0c6f304ecfe
 LIBRESOLV="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libresolv.so.2"
 LIBC="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libc.so.6"
 LIBM="/var/lib/docker/overlay2/acb8accd7a02a0531c8bb2cf363509d577334b7fc1627315e71ffc3c7b74e8dc/diff/usr/lib/x86_64-linux-gnu/libm.so.6"
+CUR_DIR=$PWD
 
 if [ $# -lt 1 ]
 then
@@ -45,7 +46,6 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
-
 fi
 
 echo "Adding the Image in outdir"
@@ -113,6 +113,10 @@ sudo mknod -m 666 ${ROOTFS}/dev/null c 1 3
 sudo mknod -m 666 ${ROOTFS}/dev/console c 5 1 
 
 # TODO: Clean and build the writer utility
+cd ${CUR_DIR}
+make clean
+make CROSS_COMPILE=${CROSS_COMPILE} 
+sudo cp writer ${ROOTFS}/home
 
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
