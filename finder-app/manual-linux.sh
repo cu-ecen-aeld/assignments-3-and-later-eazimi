@@ -67,21 +67,6 @@ mkdir -p ${ROOTFS}
 cd ${ROOTFS}
 mkdir -p bin dev etc home lib lib64 proc sbin sys tmp usr/bin usr/lib usr/sbin var/log
 
-# # HACK
-# INTRPRTR="${OUTDIR}/tmp/ld-linux-aarch64.so.1"
-# LIBRESOLV="${OUTDIR}/tmp/x86_64-linux-gnu/libresolv.so.2"
-# LIBC="${OUTDIR}/tmp/x86_64-linux-gnu/libc.so.6"
-# LIBM="${OUTDIR}/tmp/x86_64-linux-gnu/libm.so.6"
-# sudo cp ${OUTDIR}/dep/ld-linux-aarch64.so.1 ${INTRPRTR}
-# sudo cp ${OUTDIR}/dep/libresolv.so.2 ${LIBRESOLV}
-# sudo cp ${OUTDIR}/dep/libc.so.6 ${LIBC}
-# sudo cp ${OUTDIR}/dep/libm.so.6 ${LIBM}
-
-# ld-linux-aarch64.so.1
-# libresolv.so.2
-# libc.so.6
-# libm.so.6
-
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]; then
 git clone git://busybox.net/busybox.git
