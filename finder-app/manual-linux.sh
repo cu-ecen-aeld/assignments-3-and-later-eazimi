@@ -106,7 +106,7 @@ TOOLCHAIN=$(which ${CROSS_COMPILE}gcc)
 DIR_TOOLCHAIN=$(dirname ${TOOLCHAIN})
 cd ${DIR_TOOLCHAIN}
 cd ..
-cd aarch64-none-linux-gnu
+cd aarch64-none-linux-gnu/libc
 sudo cp lib/${INTRPRTR} ${ROOTFS}/lib
 sudo cp lib64/${LIBRESOLV} ${ROOTFS}/lib64/
 sudo cp lib64/${LIBC} ${ROOTFS}/lib64/ 
