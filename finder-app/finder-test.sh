@@ -10,7 +10,7 @@ WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
 username=$(cat conf/username.txt)
 
-# export PATH=$PATH:"/usr/bin:/etc/finder-app/conf/:/bin"
+export PATH="${PATH}:/usr/bin:/etc/finder-app/conf/:/bin"
 
 if [ $# -lt 3 ]
 then
