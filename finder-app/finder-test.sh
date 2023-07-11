@@ -10,8 +10,6 @@ WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
 username=$(cat /etc/finder-app/conf/username.txt)
 
-# export PATH="${PATH}:/usr/bin:/etc/finder-app/conf/:/bin"
-
 if [ $# -lt 3 ]
 then
 	echo "Using default value ${WRITESTR} for string to write"
