@@ -26,5 +26,4 @@ $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(OBJS) $(TARGET)
-
+	rm -f *.o $(TARGET)
