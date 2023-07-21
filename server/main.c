@@ -1,18 +1,31 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h> 
 #include "aesdsocket.h"
 
+#define PORT 9000
+
 int main(int argc, char **argv)
 {
-    int sock = create_socket();
-    if(sock == -1)
+    int sockfd = create_socket();
+    if(sockfd == -1)
     {
-        printf("error in opening socket: %s", strerror(errno));
+        fprintf(stderr, "socket error: %s", strerror(errno));
         return 1;
     }
 
-    close_socket(sock);
+    char port[5];
+    memset(port, 0, sizeof port);
+    sprintf(port, "%d", PORT);
+    int rc_bind = bind_addr(sockfd, port);
+    if(rc_bind == -1)
+    {
+        fprintf(stderr, "bind error: %s", strerror(errno));
+        return 1;
+    }
+
+    close_socket(sockfd);
 
     return 0;
 }
