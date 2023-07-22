@@ -8,6 +8,7 @@
 #include "aesdsocket.h"
 
 #define PORT 9000
+#define RECV_SIZE 1024
 
 int main(int argc, char **argv)
 {
@@ -54,6 +55,15 @@ int main(int argc, char **argv)
     }
     syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
 
+    char recv_buff[RECV_SIZE];
+    memset((void *)recv_buff, 0, RECV_SIZE);
+    int rc_recvdata = recv_data(connfd, recv_buff, RECV_SIZE);
+    if(rc_recvdata == -1)
+    {
+        fprintf(stderr, "recv_data error: %s", strerror(errno));
+        return -1;
+    }
+    
     close_socket(sockfd);
     closelog();
 
