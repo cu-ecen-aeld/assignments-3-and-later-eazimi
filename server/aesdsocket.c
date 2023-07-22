@@ -6,6 +6,7 @@
 #include <errno.h>
 
 struct addrinfo* addrinfo = NULL;
+#define LISTEN_BACKLOG 50
 
 int create_socket()
 {
@@ -22,12 +23,14 @@ int bind_addr(int sockfd, char* port)
 
     int rc_getaddrinfo = getaddrinfo(NULL, port, &hints, &addrinfo); 
     if(rc_getaddrinfo != 0)
-    {
-        fprintf(stderr, "getaddrinfo error: %s\n", strerror(errno));
         return rc_getaddrinfo;
-    }
 
     return bind(sockfd, addrinfo->ai_addr, sizeof(struct addrinfo));
+}
+
+int listen_conn(int sockfd)
+{
+    return listen(sockfd, LISTEN_BACKLOG);
 }
 
 void close_socket(int sock)

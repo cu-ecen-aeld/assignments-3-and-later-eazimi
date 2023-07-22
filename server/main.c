@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     if(sockfd == -1)
     {
         fprintf(stderr, "socket error: %s", strerror(errno));
-        return 1;
+        return -1;
     }
 
     char port[5];
@@ -21,8 +21,15 @@ int main(int argc, char **argv)
     int rc_bind = bind_addr(sockfd, port);
     if(rc_bind == -1)
     {
-        fprintf(stderr, "bind error: %s", strerror(errno));
-        return 1;
+        fprintf(stderr, "bind_addr error: %s", strerror(errno));
+        return -1;
+    }
+
+    int rc_listen = listen_conn(sockfd);
+    if(rc_listen == -1)
+    {
+        fprintf(stderr, "listen_conn error: %s", strerror(errno));
+        return -1;
     }
 
     close_socket(sockfd);
