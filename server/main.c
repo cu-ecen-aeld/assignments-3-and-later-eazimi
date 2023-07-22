@@ -2,12 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h> 
+#include <syslog.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "aesdsocket.h"
 
 #define PORT 9000
 
 int main(int argc, char **argv)
 {
+    openlog("server_log", LOG_PID, LOG_USER);
+
     int sockfd = create_socket();
     if(sockfd == -1)
     {
@@ -38,9 +43,19 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "accept_conn error: %s", strerror(errno));
         return -1;
-    }    
+    }
+
+    struct sockaddr_in addr;
+    int rc_getpeername = getpeername(sockfd, (struct sockaddr *)&addr, (socklen_t *)sizeof(struct sockaddr));
+    if(rc_getpeername == -1)
+    {
+        fprintf(stderr, "getpeername error: %s", strerror(errno));
+        return -1;
+    }
+    syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
 
     close_socket(sockfd);
+    closelog();
 
     return 0;
 }
