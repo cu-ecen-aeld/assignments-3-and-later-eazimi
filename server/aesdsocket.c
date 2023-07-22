@@ -1,11 +1,10 @@
 #include "aesdsocket.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <stdlib.h>
 #include <errno.h>
 
-struct addrinfo* addrinfo = NULL;
+struct addrinfo* addr_info = NULL;
 #define LISTEN_BACKLOG 50
 
 int create_socket()
@@ -21,11 +20,11 @@ int bind_addr(int sockfd, char* port)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    int rc_getaddrinfo = getaddrinfo(NULL, port, &hints, &addrinfo); 
+    int rc_getaddrinfo = getaddrinfo(NULL, port, &hints, &addr_info); 
     if(rc_getaddrinfo != 0)
         return rc_getaddrinfo;
 
-    return bind(sockfd, addrinfo->ai_addr, sizeof(struct addrinfo));
+    return bind(sockfd, addr_info->ai_addr, sizeof(struct addrinfo));
 }
 
 int listen_conn(int sockfd)
@@ -33,8 +32,13 @@ int listen_conn(int sockfd)
     return listen(sockfd, LISTEN_BACKLOG);
 }
 
+int accept_conn(int sockfd, struct sockaddr *addr_cli)
+{
+    return accept(sockfd, addr_cli, (socklen_t *)sizeof(struct sockaddr));
+}
+
 void close_socket(int sock)
 {
-    free(addrinfo);
+    free(addr_info);
     close(sock);
 }

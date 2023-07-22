@@ -32,6 +32,14 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    struct sockaddr addr_cli;
+    int connfd = accept_conn(sockfd, &addr_cli);
+    if(connfd == -1)
+    {
+        fprintf(stderr, "accept_conn error: %s", strerror(errno));
+        return -1;
+    }    
+
     close_socket(sockfd);
 
     return 0;
