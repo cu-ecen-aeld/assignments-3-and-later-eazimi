@@ -6,9 +6,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "aesdsocket.h"
+#include "handlefiles.h"
 
 #define PORT 9000
 #define RECV_SIZE 1024
+#define FILE_PATH "/var/tmp/aesdsocketdata"
 
 int main(int argc, char **argv)
 {
@@ -63,9 +65,24 @@ int main(int argc, char **argv)
         fprintf(stderr, "recv_data error: %s", strerror(errno));
         return -1;
     }
+
+    int pfd = open_file(FILE_PATH);
+    if(pfd == -1)
+    {
+        fprintf(stderr, "open_file error: %s", strerror(errno));
+        return -1;
+    }
+
+    int rc_writefile = write_file(pfd, (const void*)recv_buff, strlen(recv_buff));
+    if(rc_writefile == -1)
+    {
+        fprintf(stderr, "write_file error: %s", strerror(errno));
+        return -1;
+    }
     
     close_socket(sockfd);
     closelog();
+    close_file(pfd);
 
     return 0;
 }

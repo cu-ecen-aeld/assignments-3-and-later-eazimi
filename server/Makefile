@@ -11,6 +11,8 @@ LDFLAGS =
 SRCS = \
 	aesdsocket.h \
 	aesdsocket.c \
+	handlefiles.h \
+	handlefiles.c \
 	main.c
 
 OBJS = $(SRCS:.c=.o)
