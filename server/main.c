@@ -67,6 +67,7 @@ int main(int argc, char **argv)
     CHECK_EXIT_CONDITION(rc_senddata, "send_data");
     
     close_socket(sockfd);
+    syslog(LOG_INFO, "Closed connection from %s", inet_ntoa(addr.sin_addr));
     closelog();
     close_file(pfd);
 
