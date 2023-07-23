@@ -9,7 +9,7 @@
 #include "handlefiles.h"
 
 #define PORT 9000
-#define RECV_SIZE 1024
+#define BUFF_SIZE 1024
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 #define CHECK_EXIT_CONDITION(rc, func_name) do { \
@@ -47,9 +47,9 @@ int main(int argc, char **argv)
     CHECK_EXIT_CONDITION(rc_getpeername, "getpeername");
     syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
 
-    char recv_buff[RECV_SIZE];
-    memset((void *)recv_buff, 0, RECV_SIZE);
-    int rc_recvdata = recv_data(connfd, recv_buff, RECV_SIZE);
+    char recv_buff[BUFF_SIZE];
+    memset((void *)recv_buff, 0, BUFF_SIZE);
+    int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
     CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
 
     int pfd = open_file(FILE_PATH);
@@ -57,6 +57,10 @@ int main(int argc, char **argv)
 
     int rc_writefile = write_file(pfd, (const void*)recv_buff, strlen(recv_buff));
     CHECK_EXIT_CONDITION(rc_writefile, "write_file");
+
+    char send_buff[BUFF_SIZE];
+    int rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
+    CHECK_EXIT_CONDITION(rc_readfile, "read_file");
     
     close_socket(sockfd);
     closelog();

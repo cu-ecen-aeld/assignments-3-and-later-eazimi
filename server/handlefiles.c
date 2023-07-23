@@ -11,6 +11,11 @@ ssize_t write_file(int pfd, const void *buffer, size_t count)
     return write(pfd, buffer, count);
 }
 
+ssize_t read_file(int pfd, void *buffer, size_t nbytes)
+{
+    return read(pfd, buffer, nbytes);
+}
+
 int close_file(int pfd)
 {
     return close(pfd);
