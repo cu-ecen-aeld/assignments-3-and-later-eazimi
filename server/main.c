@@ -15,6 +15,12 @@
 int main(int argc, char **argv)
 {
     openlog("server_log", LOG_PID, LOG_USER);
+    int rc_clearfile = clear_file(FILE_PATH);
+    if(rc_clearfile == -1)
+    {
+        fprintf(stderr, "clear_file error: %s", strerror(errno));
+        return -1;
+    }
 
     int sockfd = create_socket();
     if(sockfd == -1)
