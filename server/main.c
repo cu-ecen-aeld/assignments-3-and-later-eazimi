@@ -59,8 +59,12 @@ int main(int argc, char **argv)
     CHECK_EXIT_CONDITION(rc_writefile, "write_file");
 
     char send_buff[BUFF_SIZE];
+    memset((void *)send_buff, 0, BUFF_SIZE);
     int rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
     CHECK_EXIT_CONDITION(rc_readfile, "read_file");
+
+    int rc_senddata = send_data(connfd, send_buff, rc_readfile);
+    CHECK_EXIT_CONDITION(rc_senddata, "send_data");
     
     close_socket(sockfd);
     closelog();

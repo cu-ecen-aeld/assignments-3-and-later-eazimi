@@ -42,6 +42,11 @@ int recv_data(int sockfd, void *buff, int buff_size)
     return recv(sockfd, buff, buff_size, 0);
 }
 
+int send_data(int sockfd, void *buff, int buff_size)
+{
+    return send(sockfd, buff, buff_size, 0);
+}
+
 void close_socket(int sock)
 {
     free(addr_info);
