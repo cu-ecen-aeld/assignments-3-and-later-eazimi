@@ -86,30 +86,34 @@ int main(int argc, char **argv)
         int pfd = open_file(FILE_PATH);
         CHECK_EXIT_CONDITION(pfd, "open_file");
 
-        int rc_writefile = write_file(pfd, (const void *)packet, strlen(packet));
+        int rc_writefile = write_file(pfd, (const void *)packet, sizeof(packet));
         CHECK_EXIT_CONDITION(rc_writefile, "write_file");
         close_file(pfd);
 
         memset(packet, 0, PCKT_SIZE);
         packet_index = strlen(buff2);
         strncpy(packet, buff2, packet_index);
+
+        //////////////////////////////// read data from file - send it back
+        char send_buff[BUFF_SIZE];
+        memset((void *)send_buff, 0, BUFF_SIZE);
+        pfd = open_file(FILE_PATH);
+        CHECK_EXIT_CONDITION(pfd, "open_file/send_data");
+        int rc_readfile = -1;
+        do
+        {
+            rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
+            CHECK_EXIT_CONDITION(rc_readfile, "read_file");
+            int rc_senddata = send_data(connfd, send_buff, rc_readfile);
+            CHECK_EXIT_CONDITION(rc_senddata, "send_data");
+        } while (rc_readfile > 0);
+        close_file(pfd);
     }
     else
     {
         memcpy((void*)(&packet[packet_index]), recv_buff, BUFF_SIZE);
         packet_index += BUFF_SIZE;
     }
-
-    //////////////////////////////// read data from file - send it back
-    char send_buff[BUFF_SIZE];
-    memset((void *)send_buff, 0, BUFF_SIZE);
-    int pfd = open_file(FILE_PATH);
-    int rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
-    CHECK_EXIT_CONDITION(rc_readfile, "read_file");
-
-    int rc_senddata = send_data(connfd, send_buff, rc_readfile);
-    CHECK_EXIT_CONDITION(rc_senddata, "send_data");
-    close_file(pfd);
 
     //////////////////////////////// shutdown
     close_socket(sockfd);
