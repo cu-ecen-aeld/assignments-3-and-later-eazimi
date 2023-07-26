@@ -14,6 +14,8 @@
 #define PCKT_SIZE 20*1024 
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
+bool accept_conn_loop = true;
+
 #define CHECK_EXIT_CONDITION(rc, func_name) do { \
     if((rc) == -1) \
     { \
@@ -63,61 +65,67 @@ int main(int argc, char **argv)
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
 
-    struct sockaddr addr_cli;
-    int connfd = accept_conn(sockfd, &addr_cli);
-    CHECK_EXIT_CONDITION(connfd, "accept_conn");
-
-    struct sockaddr_in addr;
-    int rc_getpeername = getpeername(sockfd, (struct sockaddr *)&addr, (socklen_t *)sizeof(struct sockaddr));
-    CHECK_EXIT_CONDITION(rc_getpeername, "getpeername");
-    syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
-
-    //////////////////////////////// receive data - write to file 
-    char recv_buff[BUFF_SIZE];
-    memset((void *)recv_buff, 0, BUFF_SIZE);
-    int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
-    CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
-
-    char buff1[BUFF_SIZE + 1], buff2[BUFF_SIZE + 1];
-    bool newpacket = split_buffer(recv_buff, buff1, buff2);
-    if(newpacket)
+    while (accept_conn_loop)
     {
-        memcpy((void *)(&packet[packet_index]), buff1, sizeof(buff1));
-        int pfd = open_file(FILE_PATH);
-        CHECK_EXIT_CONDITION(pfd, "open_file");
+        struct sockaddr addr_cli;
+        int connfd = accept_conn(sockfd, &addr_cli);
+        CHECK_EXIT_CONDITION(connfd, "accept_conn");
 
-        int rc_writefile = write_file(pfd, (const void *)packet, sizeof(packet));
-        CHECK_EXIT_CONDITION(rc_writefile, "write_file");
-        close_file(pfd);
+        struct sockaddr_in addr;
+        int rc_getpeername = getpeername(sockfd, (struct sockaddr *)&addr, (socklen_t *)sizeof(struct sockaddr));
+        CHECK_EXIT_CONDITION(rc_getpeername, "getpeername");
+        syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
 
-        memset(packet, 0, PCKT_SIZE);
-        packet_index = strlen(buff2);
-        strncpy(packet, buff2, packet_index);
+        //////////////////////////////// receive data - write to file
+        char recv_buff[BUFF_SIZE];
+        memset((void *)recv_buff, 0, BUFF_SIZE);
+        int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
+        CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
 
-        //////////////////////////////// read data from file - send it back
-        char send_buff[BUFF_SIZE];
-        memset((void *)send_buff, 0, BUFF_SIZE);
-        pfd = open_file(FILE_PATH);
-        CHECK_EXIT_CONDITION(pfd, "open_file/send_data");
-        int rc_readfile = -1;
-        do
+        char buff1[BUFF_SIZE + 1], buff2[BUFF_SIZE + 1];
+        bool newpacket = split_buffer(recv_buff, buff1, buff2);
+        if (newpacket)
         {
-            rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
-            CHECK_EXIT_CONDITION(rc_readfile, "read_file");
-            int rc_senddata = send_data(connfd, send_buff, rc_readfile);
-            CHECK_EXIT_CONDITION(rc_senddata, "send_data");
-        } while (rc_readfile > 0);
-        close_file(pfd);
-    }
-    else
-    {
-        memcpy((void*)(&packet[packet_index]), recv_buff, BUFF_SIZE);
-        packet_index += BUFF_SIZE;
+            memcpy((void *)(&packet[packet_index]), buff1, sizeof(buff1));
+            int pfd = open_file(FILE_PATH);
+            CHECK_EXIT_CONDITION(pfd, "open_file");
+
+            int rc_writefile = write_file(pfd, (const void *)packet, sizeof(packet));
+            CHECK_EXIT_CONDITION(rc_writefile, "write_file");
+            close_file(pfd);
+
+            memset(packet, 0, PCKT_SIZE);
+            packet_index = 0;
+            // packet_index = strlen(buff2);
+            // strncpy(packet, buff2, packet_index);
+
+            //////////////////////////////// read data from file - send it back
+            char send_buff[BUFF_SIZE];
+            memset((void *)send_buff, 0, BUFF_SIZE);
+            pfd = open_file(FILE_PATH);
+            CHECK_EXIT_CONDITION(pfd, "open_file/send_data");
+            int rc_readfile = -1;
+            do
+            {
+                rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
+                CHECK_EXIT_CONDITION(rc_readfile, "read_file");
+                int rc_senddata = send_data(connfd, send_buff, rc_readfile);
+                CHECK_EXIT_CONDITION(rc_senddata, "send_data");
+            } while (rc_readfile > 0);
+            close_file(pfd);
+            
+            syslog(LOG_INFO, "Closed connection from %s", inet_ntoa(addr.sin_addr));
+            close_socket(connfd);
+        }
+        else
+        {
+            memcpy((void *)(&packet[packet_index]), recv_buff, BUFF_SIZE);
+            packet_index += BUFF_SIZE;
+        }
     }
 
     //////////////////////////////// shutdown
     close_socket(sockfd);
-    syslog(LOG_INFO, "Closed connection from %s", inet_ntoa(addr.sin_addr));
     closelog();
 
     return 0;
