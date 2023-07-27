@@ -29,7 +29,7 @@ static void signal_handler(int signal_number)
 {
     if((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
-        fprintf(stdout, "SIGTERM/SIGINT received\n");
+        syslog(LOG_INFO, "Caught signal, exiting");
         accept_conn_loop = false;
     }
 }
