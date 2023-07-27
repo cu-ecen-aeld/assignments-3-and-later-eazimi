@@ -6,6 +6,7 @@
 #include <syslog.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include "aesdsocket.h"
 #include "handlefiles.h"
 
@@ -19,10 +20,19 @@ bool accept_conn_loop = true;
 #define CHECK_EXIT_CONDITION(rc, func_name) do { \
     if((rc) == -1) \
     { \
-        fprintf(stderr, "%s error: %s", (func_name), strerror(errno)); \
+        fprintf(stderr, "%s error: %s\n", (func_name), strerror(errno)); \
         exit(EXIT_FAILURE); \
     } \
 } while(0)
+
+static void signal_handler(int signal_number)
+{
+    if((signal_number == SIGINT) || (signal_number == SIGTERM))
+    {
+        fprintf(stdout, "SIGTERM/SIGINT received\n");
+        accept_conn_loop = false;
+    }
+}
 
 bool split_buffer(const char *input, char *buff1, char *buff2)
 {
@@ -52,6 +62,32 @@ int main(int argc, char **argv)
     int rc_clearfile = clear_file(FILE_PATH);
     CHECK_EXIT_CONDITION(rc_clearfile, "clear_file");
 
+    struct sigaction new_action;
+    memset((void *)&new_action, 0, sizeof(struct sigaction));
+    new_action.sa_handler = signal_handler;
+    bool success = true;
+    if(sigaction(SIGTERM, &new_action, NULL) != 0)
+    {
+        fprintf(stderr, "error %d (%s) registering for SIGTERM\n", errno, strerror(errno));
+        success = false;
+    }
+    if(sigaction(SIGINT, &new_action, NULL) != 0)
+    {
+        fprintf(stderr, "error %d (%s) registering for SIGINT\n", errno, strerror(errno));
+        success = false;
+    }
+
+    int pid = -1;
+    if(success)
+    {
+        pid = fork();
+        CHECK_EXIT_CONDITION(pid, "fork");
+        if(pid == 0)
+        {
+            pause();
+        }
+    }
+
     //////////////////////////////// socket
     int sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
@@ -68,6 +104,7 @@ int main(int argc, char **argv)
     while (accept_conn_loop)
     {
         struct sockaddr addr_cli;
+        fprintf(stdout, "waiting to accept a connection ...\n");
         int connfd = accept_conn(sockfd, &addr_cli);
         CHECK_EXIT_CONDITION(connfd, "accept_conn");
 
@@ -113,7 +150,7 @@ int main(int argc, char **argv)
                 CHECK_EXIT_CONDITION(rc_senddata, "send_data");
             } while (rc_readfile > 0);
             close_file(pfd);
-            
+
             syslog(LOG_INFO, "Closed connection from %s", inet_ntoa(addr.sin_addr));
             close_socket(connfd);
         }
@@ -127,6 +164,7 @@ int main(int argc, char **argv)
     //////////////////////////////// shutdown
     close_socket(sockfd);
     closelog();
+    kill(pid, SIGINT);
 
     return 0;
 }
