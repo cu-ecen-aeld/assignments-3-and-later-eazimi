@@ -34,7 +34,8 @@ int listen_conn(int sockfd)
 
 int accept_conn(int sockfd, struct sockaddr *addr_cli)
 {
-    return accept(sockfd, addr_cli, (socklen_t *)sizeof(struct sockaddr));
+    int addrlen = sizeof(*addr_cli);
+    return accept(sockfd, addr_cli, (socklen_t *)(&addrlen));
 }
 
 int recv_data(int sockfd, void *buff, int buff_size)
