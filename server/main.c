@@ -164,6 +164,7 @@ int main(int argc, char **argv)
     //////////////////////////////// shutdown
     close_socket(sockfd);
     closelog();
+    remove(FILE_PATH);
     kill(pid, SIGINT);
 
     return 0;
