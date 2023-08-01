@@ -122,6 +122,9 @@ int main(int argc, char **argv)
             data_size -= rc_readfile;
             memset(send_buff, 0, BUFF_SIZE);
         } while (data_size > 0);
+
+        syslog(LOG_INFO, "Closed connection from %s", str_ipcli);
+        fprintf(stdout, "Closed connection from %s\n", str_ipcli);
     }
 
     /// shutdown
