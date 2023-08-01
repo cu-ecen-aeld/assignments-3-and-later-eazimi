@@ -4,8 +4,6 @@
 #include <string.h>
 #include <errno.h> 
 #include <syslog.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <signal.h>
 #include "aesdsocket.h"
 #include "handlefiles.h"
@@ -91,10 +89,10 @@ int main(int argc, char **argv)
         int connfd = accept_conn(sockfd, &addr_cli);
         CHECK_EXIT_CONDITION(connfd, "accept_conn");
 
-        // struct sockaddr_in addr;
-        // int rc_getpeername = getpeername(sockfd, (struct sockaddr *)&addr, (socklen_t *)sizeof(struct sockaddr));
-        // CHECK_EXIT_CONDITION(rc_getpeername, "getpeername");
-        // syslog(LOG_INFO, "Accepted connection from %s", inet_ntoa(addr.sin_addr));
+        char str_ipcli[BUFF_SIZE]; 
+        get_ipcli(&addr_cli, str_ipcli);
+        syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
+        fprintf(stdout, "Accepted connection from %s\n", str_ipcli);
 
         while (true)
         {

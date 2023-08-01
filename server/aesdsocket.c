@@ -1,6 +1,8 @@
 #include "aesdsocket.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <errno.h>
 
@@ -36,6 +38,15 @@ int accept_conn(int sockfd, struct sockaddr *addr_cli)
 {
     int addrlen = sizeof(*addr_cli);
     return accept(sockfd, addr_cli, (socklen_t *)(&addrlen));
+}
+
+void get_ipcli(const struct sockaddr *addr_cli, char *s_ipcli)
+{
+    struct sockaddr_in *pV4Addr = (struct sockaddr_in *)addr_cli;
+    struct in_addr ipcli = pV4Addr->sin_addr;
+    char str_ipcli[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &ipcli, str_ipcli, INET_ADDRSTRLEN);
+    strcpy(s_ipcli, str_ipcli);
 }
 
 int recv_data(int sockfd, void *buff, int buff_size)

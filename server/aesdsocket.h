@@ -11,6 +11,8 @@ int listen_conn(int sockfd);
 
 int accept_conn(int sockfd, struct sockaddr *addr_cli);
 
+void get_ipcli(const struct sockaddr *addr_cli, char *s_ipcli);
+
 int recv_data(int sockfd, void *buff, int buff_size);
 
 int send_data(int sockfd, void *buff, int buff_size);
