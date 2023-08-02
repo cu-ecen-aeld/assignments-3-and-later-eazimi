@@ -14,6 +14,7 @@
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 bool accept_conn_loop = true;
+int sockfd;
 
 #define CHECK_EXIT_CONDITION(rc, func_name) do { \
     if((rc) == -1) \
@@ -30,6 +31,7 @@ static void signal_handler(int signal_number)
         syslog(LOG_INFO, "Caught signal, exiting");
         fprintf(stdout, "Caught signal, exiting\n");
         accept_conn_loop = false;
+        shutdown(sockfd, SHUT_RDWR);
     }
 }
 
@@ -64,7 +66,7 @@ int main(int argc, char **argv)
     }
 
     /// create socket
-    int sockfd = create_socket();
+    sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
 
     char port[5];
