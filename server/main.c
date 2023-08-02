@@ -29,7 +29,6 @@ static void signal_handler(int signal_number)
     if((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
         syslog(LOG_INFO, "Caught signal, exiting");
-        fprintf(stdout, "Caught signal, exiting\n");
         accept_conn_loop = false;
         shutdown(sockfd, SHUT_RDWR);
     }
@@ -77,9 +76,6 @@ int main(int argc, char **argv)
 
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
-
-    int rc_clearfile = clear_file(FILE_PATH);
-    CHECK_EXIT_CONDITION(rc_clearfile, "clear_file");
 
     int pfd = open_file(FILE_PATH);
     CHECK_EXIT_CONDITION(pfd, "open_file");
@@ -130,6 +126,7 @@ int main(int argc, char **argv)
     }
 
     /// shutdown
+    fprintf(stdout, "\nexiting ...\n");
     close(pfd);
     closelog();
     remove(FILE_PATH);
