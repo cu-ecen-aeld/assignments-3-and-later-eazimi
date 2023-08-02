@@ -14,7 +14,6 @@
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 bool accept_conn_loop = true;
-int sockfd;
 
 #define CHECK_EXIT_CONDITION(rc, func_name) do { \
     if((rc) == -1) \
@@ -30,7 +29,6 @@ static void signal_handler(int signal_number)
     {
         syslog(LOG_INFO, "Caught signal, exiting");
         accept_conn_loop = false;
-        shutdown(sockfd, SHUT_RDWR);
     }
 }
 
@@ -65,7 +63,7 @@ int main(int argc, char **argv)
     }
 
     /// create socket
-    sockfd = create_socket();
+    int sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
 
     char port[5];
@@ -85,7 +83,12 @@ int main(int argc, char **argv)
         struct sockaddr addr_cli;
         fprintf(stdout, "waiting to accept a connection ...\n");
         int connfd = accept_conn(sockfd, &addr_cli);
-        CHECK_EXIT_CONDITION(connfd, "accept_conn");
+        if(connfd == -1)
+        {
+            shutdown(sockfd, SHUT_RDWR);
+            fprintf(stdout, "accept_conn error: %s\n", strerror(sockfd));
+            continue;
+        }
 
         char str_ipcli[BUFF_SIZE]; 
         get_ipcli(&addr_cli, str_ipcli);
