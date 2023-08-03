@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
+#include <unistd.h>
 #include "aesdsocket.h"
 #include "handlefiles.h"
 
@@ -20,7 +21,6 @@ bool accept_conn_loop = true;
     {                                                                        \
         if ((rc) == -1)                                                      \
         {                                                                    \
-            fprintf(stderr, "%s error: %s\n", (func_name), strerror(errno)); \
             exit(EXIT_FAILURE);                                              \
         }                                                                    \
     } while (0)
@@ -44,12 +44,10 @@ void socket_handler()
     bool success = true;
     if (sigaction(SIGTERM, &new_action, NULL) != 0)
     {
-        fprintf(stderr, "error %d (%s) registering for SIGTERM\n", errno, strerror(errno));
         success = false;
     }
     if (sigaction(SIGINT, &new_action, NULL) != 0)
     {
-        fprintf(stderr, "error %d (%s) registering for SIGINT\n", errno, strerror(errno));
         success = false;
     }
 
@@ -83,19 +81,16 @@ void socket_handler()
     while (accept_conn_loop)
     {
         struct sockaddr addr_cli;
-        fprintf(stdout, "waiting to accept a connection ...\n");
         int connfd = accept_conn(sockfd, &addr_cli);
         if (connfd == -1)
         {
             shutdown(sockfd, SHUT_RDWR);
-            fprintf(stdout, "accept_conn error: %s\n", strerror(sockfd));
             continue;
         }
 
         char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
         syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
-        fprintf(stdout, "Accepted connection from %s\n", str_ipcli);
 
         while (true)
         {
@@ -127,15 +122,47 @@ void socket_handler()
         } while (data_size > 0);
 
         syslog(LOG_INFO, "Closed connection from %s", str_ipcli);
-        fprintf(stdout, "Closed connection from %s\n", str_ipcli);
     }
 
     /// shutdown
-    fprintf(stdout, "\nexiting ...\n");
+    syslog(LOG_INFO, "exiting ...");
     close(pfd);
     closelog();
     remove(FILE_PATH);
     kill(pid, SIGINT);
+}
+
+int _daemon()
+{
+    // PID: Process ID
+    // SID: Session ID
+    pid_t pid, sid;
+    pid = fork(); // Fork off the parent process
+    if (pid < 0)
+    {
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0)
+    {
+        exit(EXIT_SUCCESS);
+    }
+    // Create a SID for child
+    sid = setsid();
+    if (sid < 0)
+    {
+        // FAIL
+        exit(EXIT_FAILURE);
+    }
+    if ((chdir("/")) < 0)
+    {
+        // FAIL
+        exit(EXIT_FAILURE);
+    }
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    socket_handler();
+    exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -143,6 +170,9 @@ int main(int argc, char **argv)
     if (argc == 2 && strcmp(argv[1], "-d") == 0)
     {
         fprintf(stdout, "run as a daemon\n");
+        _daemon();
+        fprintf(stdout, "it should not being printed!\n");
+        return 0; // never reach here!
     }
 
     socket_handler();
