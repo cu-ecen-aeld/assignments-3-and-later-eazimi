@@ -34,6 +34,11 @@ static void signal_handler(int signal_number)
 
 int main(int argc, char **argv)
 {
+    if(argc == 2 && strcmp(argv[1], "-d") == 0)
+    {
+        fprintf(stdout, "run as a daemon\n");
+    } 
+
     openlog("server_log", LOG_PID, LOG_USER);
  
     struct sigaction new_action;
