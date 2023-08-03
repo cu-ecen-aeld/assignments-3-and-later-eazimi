@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <errno.h> 
+#include <errno.h>
 #include <syslog.h>
 #include <signal.h>
 #include "aesdsocket.h"
@@ -10,58 +10,55 @@
 
 #define PORT 9000
 #define BUFF_SIZE 1024
-#define PCKT_SIZE 20*1024 
+#define PCKT_SIZE 20 * 1024
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 bool accept_conn_loop = true;
 
-#define CHECK_EXIT_CONDITION(rc, func_name) do { \
-    if((rc) == -1) \
-    { \
-        fprintf(stderr, "%s error: %s\n", (func_name), strerror(errno)); \
-        exit(EXIT_FAILURE); \
-    } \
-} while(0)
+#define CHECK_EXIT_CONDITION(rc, func_name)                                  \
+    do                                                                       \
+    {                                                                        \
+        if ((rc) == -1)                                                      \
+        {                                                                    \
+            fprintf(stderr, "%s error: %s\n", (func_name), strerror(errno)); \
+            exit(EXIT_FAILURE);                                              \
+        }                                                                    \
+    } while (0)
 
 static void signal_handler(int signal_number)
 {
-    if((signal_number == SIGINT) || (signal_number == SIGTERM))
+    if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
         syslog(LOG_INFO, "Caught signal, exiting");
         accept_conn_loop = false;
     }
 }
 
-int main(int argc, char **argv)
+void socket_handler()
 {
-    if(argc == 2 && strcmp(argv[1], "-d") == 0)
-    {
-        fprintf(stdout, "run as a daemon\n");
-    } 
-
     openlog("server_log", LOG_PID, LOG_USER);
- 
+
     struct sigaction new_action;
     memset((void *)&new_action, 0, sizeof(struct sigaction));
     new_action.sa_handler = signal_handler;
     bool success = true;
-    if(sigaction(SIGTERM, &new_action, NULL) != 0)
+    if (sigaction(SIGTERM, &new_action, NULL) != 0)
     {
         fprintf(stderr, "error %d (%s) registering for SIGTERM\n", errno, strerror(errno));
         success = false;
     }
-    if(sigaction(SIGINT, &new_action, NULL) != 0)
+    if (sigaction(SIGINT, &new_action, NULL) != 0)
     {
         fprintf(stderr, "error %d (%s) registering for SIGINT\n", errno, strerror(errno));
         success = false;
     }
 
     int pid = -1;
-    if(success)
+    if (success)
     {
         pid = fork();
         CHECK_EXIT_CONDITION(pid, "fork");
-        if(pid == 0)
+        if (pid == 0)
         {
             pause();
         }
@@ -88,14 +85,14 @@ int main(int argc, char **argv)
         struct sockaddr addr_cli;
         fprintf(stdout, "waiting to accept a connection ...\n");
         int connfd = accept_conn(sockfd, &addr_cli);
-        if(connfd == -1)
+        if (connfd == -1)
         {
             shutdown(sockfd, SHUT_RDWR);
             fprintf(stdout, "accept_conn error: %s\n", strerror(sockfd));
             continue;
         }
 
-        char str_ipcli[BUFF_SIZE]; 
+        char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
         syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
         fprintf(stdout, "Accepted connection from %s\n", str_ipcli);
@@ -139,6 +136,15 @@ int main(int argc, char **argv)
     closelog();
     remove(FILE_PATH);
     kill(pid, SIGINT);
+}
 
+int main(int argc, char **argv)
+{
+    if (argc == 2 && strcmp(argv[1], "-d") == 0)
+    {
+        fprintf(stdout, "run as a daemon\n");
+    }
+
+    socket_handler();
     return 0;
 }
