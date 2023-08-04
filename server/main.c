@@ -15,6 +15,7 @@
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 bool accept_conn_loop = true;
+int sockfd = -1;
 
 #define CHECK_EXIT_CONDITION(rc, func_name)                                  \
     do                                                                       \
@@ -36,41 +37,12 @@ static void signal_handler(int signal_number)
 
 void socket_handler()
 {
-    openlog("server_log", LOG_PID, LOG_USER);
-
-    struct sigaction new_action;
-    memset((void *)&new_action, 0, sizeof(struct sigaction));
-    new_action.sa_handler = signal_handler;
-    bool success = true;
-    if (sigaction(SIGTERM, &new_action, NULL) != 0)
+    int pid = fork();
+    CHECK_EXIT_CONDITION(pid, "fork");
+    if (pid == 0)
     {
-        success = false;
+        pause();
     }
-    if (sigaction(SIGINT, &new_action, NULL) != 0)
-    {
-        success = false;
-    }
-
-    int pid = -1;
-    if (success)
-    {
-        pid = fork();
-        CHECK_EXIT_CONDITION(pid, "fork");
-        if (pid == 0)
-        {
-            pause();
-        }
-    }
-
-    /// create socket
-    int sockfd = create_socket();
-    CHECK_EXIT_CONDITION(sockfd, "create_socket");
-
-    char port[5];
-    memset(port, 0, sizeof port);
-    sprintf(port, "%d", PORT);
-    int rc_bind = bind_addr(sockfd, port);
-    CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
 
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
@@ -167,14 +139,40 @@ int _daemon()
 
 int main(int argc, char **argv)
 {
+    bool run_daemon = false;
     if (argc == 2 && strcmp(argv[1], "-d") == 0)
+    {
+        run_daemon = true;
+    }
+
+    /// create socket
+    sockfd = create_socket();
+    CHECK_EXIT_CONDITION(sockfd, "create_socket");
+
+    char port[5];
+    memset(port, 0, sizeof port);
+    sprintf(port, "%d", PORT);
+    int rc_bind = bind_addr(sockfd, port);
+    CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
+
+    openlog("server_log", LOG_PID, LOG_USER);
+
+    struct sigaction new_action;
+    memset((void *)&new_action, 0, sizeof(struct sigaction));
+    new_action.sa_handler = signal_handler;
+    if ((sigaction(SIGTERM, &new_action, NULL) != 0) || (sigaction(SIGINT, &new_action, NULL) != 0))
+    {
+        syslog(LOG_ERR, "Couldn't assign signal handlers, exiting");
+        return 0;
+    }
+
+    if(run_daemon)
     {
         fprintf(stdout, "run as a daemon\n");
         _daemon();
-        fprintf(stdout, "it should not being printed!\n");
-        return 0; // never reach here!
+        fprintf(stdout, "never run this line ...\n");
     }
-
+    
     socket_handler();
     return 0;
 }
