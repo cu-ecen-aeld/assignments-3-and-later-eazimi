@@ -97,7 +97,6 @@ void socket_handler()
     }
 
     /// shutdown
-    syslog(LOG_INFO, "exiting ...");
     close(pfd);
     closelog();
     remove(FILE_PATH);
@@ -162,15 +161,12 @@ int main(int argc, char **argv)
     new_action.sa_handler = signal_handler;
     if ((sigaction(SIGTERM, &new_action, NULL) != 0) || (sigaction(SIGINT, &new_action, NULL) != 0))
     {
-        syslog(LOG_ERR, "Couldn't assign signal handlers, exiting");
         return 0;
     }
 
     if(run_daemon)
     {
-        fprintf(stdout, "run as a daemon\n");
         _daemon();
-        fprintf(stdout, "never run this line ...\n");
     }
     
     socket_handler();
