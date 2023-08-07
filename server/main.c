@@ -37,13 +37,6 @@ static void signal_handler(int signal_number)
 
 void socket_handler()
 {
-    int pid = fork();
-    CHECK_EXIT_CONDITION(pid, "fork");
-    if (pid == 0)
-    {
-        pause();
-    }
-
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
 
@@ -100,7 +93,6 @@ void socket_handler()
     close(pfd);
     closelog();
     remove(FILE_PATH);
-    kill(pid, SIGINT);
 }
 
 int _daemon()
