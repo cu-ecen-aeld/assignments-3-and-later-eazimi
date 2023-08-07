@@ -15,15 +15,14 @@
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
 bool accept_conn_loop = true;
-int sockfd = -1;
 
-#define CHECK_EXIT_CONDITION(rc, func_name)                                  \
-    do                                                                       \
-    {                                                                        \
-        if ((rc) == -1)                                                      \
-        {                                                                    \
-            exit(EXIT_FAILURE);                                              \
-        }                                                                    \
+#define CHECK_EXIT_CONDITION(rc, func_name) \
+    do                                      \
+    {                                       \
+        if ((rc) == -1)                     \
+        {                                   \
+            exit(EXIT_FAILURE);             \
+        }                                   \
     } while (0)
 
 static void signal_handler(int signal_number)
@@ -35,8 +34,64 @@ static void signal_handler(int signal_number)
     }
 }
 
-void socket_handler()
+void _daemon()
 {
+    // PID: Process ID
+    // SID: Session ID
+    pid_t pid, sid;
+    pid = fork(); // Fork off the parent process
+    if (pid < 0)
+    {
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0)
+    {
+        exit(EXIT_SUCCESS);
+    }
+    // Create a SID for child
+    sid = setsid();
+    if (sid < 0)
+    {
+        // FAIL
+        exit(EXIT_FAILURE);
+    }
+    if ((chdir("/")) < 0)
+    {
+        // FAIL
+        exit(EXIT_FAILURE);
+    }
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+}
+
+int main(int argc, char **argv)
+{
+    /// create socket
+    int sockfd = create_socket();
+    CHECK_EXIT_CONDITION(sockfd, "create_socket");
+
+    char port[5];
+    memset(port, 0, sizeof port);
+    sprintf(port, "%d", PORT);
+    int rc_bind = bind_addr(sockfd, port);
+    CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
+
+    openlog("server_log", LOG_PID, LOG_USER);
+
+    struct sigaction new_action;
+    memset((void *)&new_action, 0, sizeof(struct sigaction));
+    new_action.sa_handler = signal_handler;
+    if ((sigaction(SIGTERM, &new_action, NULL) != 0) || (sigaction(SIGINT, &new_action, NULL) != 0))
+    {
+        return 0;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "-d") == 0)
+    {
+        _daemon();
+    }
+
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
 
@@ -93,74 +148,6 @@ void socket_handler()
     close(pfd);
     closelog();
     remove(FILE_PATH);
-}
 
-int _daemon()
-{
-    // PID: Process ID
-    // SID: Session ID
-    pid_t pid, sid;
-    pid = fork(); // Fork off the parent process
-    if (pid < 0)
-    {
-        exit(EXIT_FAILURE);
-    }
-    if (pid > 0)
-    {
-        exit(EXIT_SUCCESS);
-    }
-    // Create a SID for child
-    sid = setsid();
-    if (sid < 0)
-    {
-        // FAIL
-        exit(EXIT_FAILURE);
-    }
-    if ((chdir("/")) < 0)
-    {
-        // FAIL
-        exit(EXIT_FAILURE);
-    }
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
-    socket_handler();
-    exit(EXIT_SUCCESS);
-}
-
-int main(int argc, char **argv)
-{
-    bool run_daemon = false;
-    if (argc == 2 && strcmp(argv[1], "-d") == 0)
-    {
-        run_daemon = true;
-    }
-
-    /// create socket
-    sockfd = create_socket();
-    CHECK_EXIT_CONDITION(sockfd, "create_socket");
-
-    char port[5];
-    memset(port, 0, sizeof port);
-    sprintf(port, "%d", PORT);
-    int rc_bind = bind_addr(sockfd, port);
-    CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
-
-    openlog("server_log", LOG_PID, LOG_USER);
-
-    struct sigaction new_action;
-    memset((void *)&new_action, 0, sizeof(struct sigaction));
-    new_action.sa_handler = signal_handler;
-    if ((sigaction(SIGTERM, &new_action, NULL) != 0) || (sigaction(SIGINT, &new_action, NULL) != 0))
-    {
-        return 0;
-    }
-
-    if(run_daemon)
-    {
-        _daemon();
-    }
-    
-    socket_handler();
     return 0;
 }
