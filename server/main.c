@@ -121,7 +121,7 @@ int main(int argc, char **argv)
             int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
             CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
 
-            int rc_writefile = write_file(pfd, (const void *)recv_buff, rc_recvdata);
+            int rc_writefile = write(pfd, (const void *)recv_buff, rc_recvdata);
             CHECK_EXIT_CONDITION(rc_writefile, "write_file");
 
             char *pch = strstr(recv_buff, "\n");

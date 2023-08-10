@@ -2,11 +2,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-ssize_t write_file(int pfd, const void *buffer, size_t count)
-{
-    return write(pfd, buffer, count);
-}
-
 ssize_t read_file(int pfd, void *buffer, size_t nbytes)
 {
     return read(pfd, buffer, nbytes);
