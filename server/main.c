@@ -134,7 +134,7 @@ int main(int argc, char **argv)
         lseek(pfd, 0L, SEEK_SET);
         do
         {
-            int rc_readfile = read_file(pfd, send_buff, BUFF_SIZE);
+            int rc_readfile = read(pfd, send_buff, BUFF_SIZE);
             CHECK_EXIT_CONDITION(rc_readfile, "read_file");
             int rc_senddata = send_data(connfd, send_buff, rc_readfile);
             CHECK_EXIT_CONDITION(rc_senddata, "send_data");

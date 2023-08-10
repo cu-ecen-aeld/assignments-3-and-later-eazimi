@@ -2,11 +2,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-ssize_t read_file(int pfd, void *buffer, size_t nbytes)
-{
-    return read(pfd, buffer, nbytes);
-}
-
 int close_file(int pfd)
 {
     return close(pfd);
