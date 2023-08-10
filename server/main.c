@@ -6,6 +6,7 @@
 #include <syslog.h>
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "aesdsocket.h"
 #include "handlefiles.h"
 
@@ -95,7 +96,7 @@ int main(int argc, char **argv)
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
 
-    int pfd = open_file(FILE_PATH);
+    int pfd = open(FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     CHECK_EXIT_CONDITION(pfd, "open_file");
 
     while (accept_conn_loop)
