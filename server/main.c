@@ -6,9 +6,9 @@
 #include <syslog.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include "aesdsocket.h"
-#include "handlefiles.h"
 
 #define PORT 9000
 #define BUFF_SIZE 1024
