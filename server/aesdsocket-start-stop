@@ -2,15 +2,17 @@
 
 case "$1" in
   start)
-    echo "Starting aesdsocket with -d option 3"
+    echo "Starting aesdsocket 4"
     # start-stop-daemon -S -n aesdsocket -a /usr/bin/aesdsocket -- -d
+    start-stop-daemon aesdsocket -S -n aesdsocket -a /usr/bin/aesdsocket -- -d
     # start-stop-daemon -S -n aesdsocket -a /usr/bin/aesdsocket
-    start-stop-daemon --start --exec /usr/bin/aesdsocket -- -d
+    # start-stop-daemon --start --exec /usr/bin/aesdsocket -- -d
     echo "after start-stop-daemon -S"
     ;;
   stop)
     echo "Stopping aesdsocket daemon"
-    start-stop-daemon -K -n aesdsocket -a /usr/bin/aesdsocket
+    # start-stop-daemon -K -n aesdsocket -a /usr/bin/aesdsocket
+    start-stop-daemon aesdsocket -K -n aesdsocket -a /usr/bin/aesdsocket
     echo "after start-stop-daemon -K"
     ;;
   *)
