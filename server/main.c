@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
-#include <syslog.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -30,7 +29,7 @@ static void signal_handler(int signal_number)
 {
     if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
-        syslog(LOG_INFO, "Caught signal, exiting");
+        fprintf(stdout, "Caught signal, exiting");
         accept_conn_loop = false;
     }
 }
@@ -78,8 +77,6 @@ int main(int argc, char **argv)
     int rc_bind = bind_addr(sockfd, port);
     CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
 
-    openlog("server_log", LOG_PID, LOG_USER);
-
     struct sigaction new_action;
     memset((void *)&new_action, 0, sizeof(struct sigaction));
     new_action.sa_handler = signal_handler;
@@ -111,7 +108,7 @@ int main(int argc, char **argv)
 
         char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
-        syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
+        fprintf(stdout, "Accepted connection from %s", str_ipcli);
 
         while (true)
         {
@@ -142,12 +139,11 @@ int main(int argc, char **argv)
             memset(send_buff, 0, BUFF_SIZE);
         } while (data_size > 0);
 
-        syslog(LOG_INFO, "Closed connection from %s", str_ipcli);
+        fprintf(stdout, "Closed connection from %s", str_ipcli);
     }
 
     /// shutdown
     close(pfd);
-    closelog();
     remove(FILE_PATH);
 
     return 0;
