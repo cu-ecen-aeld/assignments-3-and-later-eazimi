@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <syslog.h>
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
@@ -29,6 +30,7 @@ static void signal_handler(int signal_number)
 {
     if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
+        syslog(LOG_INFO, "Caught signal, exiting");
         fprintf(stdout, "Caught signal, exiting");
         accept_conn_loop = false;
     }
@@ -77,6 +79,8 @@ int main(int argc, char **argv)
     int rc_bind = bind_addr(sockfd, port);
     CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
 
+    openlog("server_log", LOG_PID, LOG_USER);
+
     struct sigaction new_action;
     memset((void *)&new_action, 0, sizeof(struct sigaction));
     new_action.sa_handler = signal_handler;
@@ -109,6 +113,7 @@ int main(int argc, char **argv)
         char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
         fprintf(stdout, "Accepted connection from %s", str_ipcli);
+        syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
 
         while (true)
         {
@@ -140,11 +145,13 @@ int main(int argc, char **argv)
         } while (data_size > 0);
 
         fprintf(stdout, "Closed connection from %s", str_ipcli);
+        syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
     }
 
     /// shutdown
     close(pfd);
     remove(FILE_PATH);
+    closelog();
 
     return 0;
 }
