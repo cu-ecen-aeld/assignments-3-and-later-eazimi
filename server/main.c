@@ -69,6 +69,9 @@ void _daemon()
 
 int main(int argc, char **argv)
 {
+    fprintf(stdout, "running main()\n");
+    syslog(LOG_INFO, "running main()");
+    
     /// create socket
     int sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
