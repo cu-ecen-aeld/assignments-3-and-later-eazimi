@@ -22,6 +22,7 @@ bool accept_conn_loop = true;
     {                                       \
         if ((rc) == -1)                     \
         {                                   \
+            fprintf(stdout, "%s error: %s\n", func_name, strerror(errno)); \
             exit(EXIT_FAILURE);             \
         }                                   \
     } while (0)
@@ -31,7 +32,7 @@ static void signal_handler(int signal_number)
     if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
         syslog(LOG_INFO, "Caught signal, exiting");
-        fprintf(stdout, "Caught signal, exiting");
+        // fprintf(stdout, "Caught signal, exiting");
         accept_conn_loop = false;
     }
 }
@@ -80,6 +81,7 @@ int main(int argc, char **argv)
     char port[5];
     memset(port, 0, sizeof port);
     sprintf(port, "%d", PORT);
+    fprintf(stdout, "after bind_addr()\n");
     int rc_bind = bind_addr(sockfd, port);
     CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
     fprintf(stdout, "after bind_addr()\n");
