@@ -22,7 +22,6 @@ bool accept_conn_loop = true;
     {                                       \
         if ((rc) == -1)                     \
         {                                   \
-            fprintf(stdout, "%s error: %s\n", func_name, strerror(errno)); \
             exit(EXIT_FAILURE);             \
         }                                   \
     } while (0)
@@ -32,7 +31,6 @@ static void signal_handler(int signal_number)
     if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
         syslog(LOG_INFO, "Caught signal, exiting");
-        // fprintf(stdout, "Caught signal, exiting");
         accept_conn_loop = false;
     }
 }
@@ -70,21 +68,21 @@ void _daemon()
 
 int main(int argc, char **argv)
 {
-    fprintf(stdout, "running main()\n");
+    // fprintf(stdout, "running main()\n");
     syslog(LOG_INFO, "running main()");
 
     /// create socket
     int sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
-    fprintf(stdout, "after create_socket()\n");
+    // fprintf(stdout, "after create_socket()\n");
 
     char port[5];
     memset(port, 0, sizeof port);
     sprintf(port, "%d", PORT);
-    fprintf(stdout, "after bind_addr()\n");
+    // fprintf(stdout, "after bind_addr()\n");
     int rc_bind = bind_addr(sockfd, port);
     CHECK_EXIT_CONDITION(rc_bind, "bind_addr");
-    fprintf(stdout, "after bind_addr()\n");
+    // fprintf(stdout, "after bind_addr()\n");
 
     openlog("server_log", LOG_PID, LOG_USER);
 
@@ -101,19 +99,19 @@ int main(int argc, char **argv)
         _daemon();
     }
 
-    fprintf(stdout, "before listen_conn()\n");
+    // fprintf(stdout, "before listen_conn()\n");
     int rc_listen = listen_conn(sockfd);
     CHECK_EXIT_CONDITION(rc_listen, "listen_conn");
-    fprintf(stdout, "after listen_conn()\n");
+    // fprintf(stdout, "after listen_conn()\n");
 
     int pfd = open(FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    fprintf(stdout, "after open()\n");
+    // fprintf(stdout, "after open()\n");
     CHECK_EXIT_CONDITION(pfd, "open_file");
 
     while (accept_conn_loop)
     {
         struct sockaddr addr_cli;
-        fprintf(stdout, "waiting for a connection\n");
+        // fprintf(stdout, "waiting for a connection\n");
         int connfd = accept_conn(sockfd, &addr_cli);
         if (connfd == -1)
         {
@@ -123,7 +121,7 @@ int main(int argc, char **argv)
 
         char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
-        fprintf(stdout, "Accepted connection from %s", str_ipcli);
+        // fprintf(stdout, "Accepted connection from %s", str_ipcli);
         syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
 
         while (true)
@@ -132,11 +130,11 @@ int main(int argc, char **argv)
             char recv_buff[BUFF_SIZE + 1];
             memset((void *)recv_buff, 0, BUFF_SIZE + 1);
             int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
-            fprintf(stdout, "after recv_data()\n");
+            // fprintf(stdout, "after recv_data()\n");
             CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
 
             int rc_writefile = write(pfd, (const void *)recv_buff, rc_recvdata);
-            fprintf(stdout, "after write()\n");
+            // fprintf(stdout, "after write()\n");
             CHECK_EXIT_CONDITION(rc_writefile, "write_file");
 
             char *pch = strstr(recv_buff, "\n");
@@ -152,13 +150,13 @@ int main(int argc, char **argv)
             int rc_readfile = read(pfd, send_buff, BUFF_SIZE);
             CHECK_EXIT_CONDITION(rc_readfile, "read_file");
             int rc_senddata = send_data(connfd, send_buff, rc_readfile);
-            fprintf(stdout, "after send_data()\n");
+            // fprintf(stdout, "after send_data()\n");
             CHECK_EXIT_CONDITION(rc_senddata, "send_data");
             data_size -= rc_readfile;
             memset(send_buff, 0, BUFF_SIZE);
         } while (data_size > 0);
 
-        fprintf(stdout, "Closed connection from %s", str_ipcli);
+        // fprintf(stdout, "Closed connection from %s", str_ipcli);
         syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
     }
 
