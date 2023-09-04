@@ -9,6 +9,7 @@ CFLAGS = -Wall -Werror
 LDFLAGS = 
 
 SRCS = \
+	queue.h	\
 	aesdsocket.h \
 	aesdsocket.c \
 	main.c

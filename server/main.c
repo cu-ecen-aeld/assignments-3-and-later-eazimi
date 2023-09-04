@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "aesdsocket.h"
+#include "queue.h"
 
 #define PORT 9000
 #define BUFF_SIZE 1024
