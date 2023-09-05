@@ -48,6 +48,7 @@ static void *thread_start(void *arg)
 {
     struct thread_info *tinfo = (struct thread_info *)arg;
 
+    pthread_mutex_lock(tinfo->mutex);
     while (true)
     {
         /// receive data - write to file
@@ -55,10 +56,8 @@ static void *thread_start(void *arg)
         memset((void *)recv_buff, 0, BUFF_SIZE + 1);
         int rc_recvdata = recv_data(tinfo->connfd, recv_buff, BUFF_SIZE);
         CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
-
-        pthread_mutex_lock(tinfo->mutex);
+        
         int rc_writefile = write(tinfo->pfd, (const void *)recv_buff, rc_recvdata);
-        pthread_mutex_unlock(tinfo->mutex);
         CHECK_EXIT_CONDITION(rc_writefile, "write_file");
 
         char *pch = strstr(recv_buff, "\n");
@@ -66,7 +65,6 @@ static void *thread_start(void *arg)
             break;
     }
 
-    pthread_mutex_lock(tinfo->mutex);
     int data_size = lseek(tinfo->pfd, 0L, SEEK_CUR);
     char send_buff[BUFF_SIZE];
     lseek(tinfo->pfd, 0L, SEEK_SET);
