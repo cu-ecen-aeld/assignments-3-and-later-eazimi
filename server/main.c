@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include "aesdsocket.h"
 #include "queue.h"
+#include "pthread.h"
 
 #define PORT 9000
 #define BUFF_SIZE 1024
@@ -34,6 +35,53 @@ static void signal_handler(int signal_number)
         syslog(LOG_INFO, "Caught signal, exiting");
         accept_conn_loop = false;
     }
+}
+
+struct thread_info
+{
+    pthread_mutex_t *mutex;
+    int pfd;
+    int connfd;
+};
+
+static void *thread_start(void *arg)
+{
+    struct thread_info *tinfo = (struct thread_info *)arg;
+
+    while (true)
+    {
+        /// receive data - write to file
+        char recv_buff[BUFF_SIZE + 1];
+        memset((void *)recv_buff, 0, BUFF_SIZE + 1);
+        int rc_recvdata = recv_data(tinfo->connfd, recv_buff, BUFF_SIZE);
+        CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
+
+        pthread_mutex_lock(tinfo->mutex);
+        int rc_writefile = write(tinfo->pfd, (const void *)recv_buff, rc_recvdata);
+        pthread_mutex_unlock(tinfo->mutex);
+        CHECK_EXIT_CONDITION(rc_writefile, "write_file");
+
+        char *pch = strstr(recv_buff, "\n");
+        if (pch != NULL)
+            break;
+    }
+
+    pthread_mutex_lock(tinfo->mutex);
+    int data_size = lseek(tinfo->pfd, 0L, SEEK_CUR);
+    char send_buff[BUFF_SIZE];
+    lseek(tinfo->pfd, 0L, SEEK_SET);
+    do
+    {
+        int rc_readfile = read(tinfo->pfd, send_buff, BUFF_SIZE);
+        CHECK_EXIT_CONDITION(rc_readfile, "read_file");
+        int rc_senddata = send_data(tinfo->connfd, send_buff, rc_readfile);
+        CHECK_EXIT_CONDITION(rc_senddata, "send_data");
+        data_size -= rc_readfile;
+        memset(send_buff, 0, BUFF_SIZE);
+    } while (data_size > 0);
+    pthread_mutex_unlock(tinfo->mutex);
+
+    return NULL;
 }
 
 void _daemon()
@@ -69,6 +117,9 @@ void _daemon()
 
 int main(int argc, char **argv)
 {
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
+
     /// create socket
     int sockfd = create_socket();
     CHECK_EXIT_CONDITION(sockfd, "create_socket");
@@ -106,47 +157,35 @@ int main(int argc, char **argv)
         int connfd = accept_conn(sockfd, &addr_cli);
         if (connfd == -1)
         {
-            shutdown(sockfd, SHUT_RDWR);
             continue;
-        }
+        }        
 
         char str_ipcli[BUFF_SIZE];
         get_ipcli(&addr_cli, str_ipcli);
         syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
 
-        while (true)
+        struct thread_info *tinfo = (struct thread_info *)malloc(sizeof(struct thread_info));
+        if(tinfo == NULL)
         {
-            /// receive data - write to file
-            char recv_buff[BUFF_SIZE + 1];
-            memset((void *)recv_buff, 0, BUFF_SIZE + 1);
-            int rc_recvdata = recv_data(connfd, recv_buff, BUFF_SIZE);
-            CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
-
-            int rc_writefile = write(pfd, (const void *)recv_buff, rc_recvdata);
-            CHECK_EXIT_CONDITION(rc_writefile, "write_file");
-
-            char *pch = strstr(recv_buff, "\n");
-            if (pch != NULL)
-                break;
+            syslog(LOG_ERR, "Could not allocate memory for a thread_info object");
+            continue;
         }
+        tinfo->mutex = &mutex;
+        tinfo->pfd = pfd;
+        tinfo->connfd = connfd;
 
-        int data_size = lseek(pfd, 0L, SEEK_CUR);
-        char send_buff[BUFF_SIZE];
-        lseek(pfd, 0L, SEEK_SET);
-        do
+        pthread_t tid;
+        int s = pthread_create(&tid, NULL, thread_start, (void *)tinfo);
+        if (s != 0)
         {
-            int rc_readfile = read(pfd, send_buff, BUFF_SIZE);
-            CHECK_EXIT_CONDITION(rc_readfile, "read_file");
-            int rc_senddata = send_data(connfd, send_buff, rc_readfile);
-            CHECK_EXIT_CONDITION(rc_senddata, "send_data");
-            data_size -= rc_readfile;
-            memset(send_buff, 0, BUFF_SIZE);
-        } while (data_size > 0);
-
-        syslog(LOG_INFO, "Accepted connection from %s", str_ipcli);
+            syslog(LOG_ERR, "pthread_create() error: %s", strerror(errno));
+            continue;
+        }        
     }
 
     /// shutdown
+    pthread_mutex_destroy(&mutex);
+    shutdown(sockfd, SHUT_RDWR);
     close(pfd);
     remove(FILE_PATH);
     closelog();

@@ -6,7 +6,7 @@ ifdef CROSS_COMPILE
 endif
 
 CFLAGS = -Wall -Werror
-LDFLAGS = 
+LDFLAGS = -pthread
 
 SRCS = \
 	queue.h	\
