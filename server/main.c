@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include "aesdsocket.h"
 #include "queue.h"
-#include "pthread.h"
 
 #define PORT 9000
 #define BUFF_SIZE 1024
@@ -115,8 +115,19 @@ void _daemon()
     close(STDERR_FILENO);
 }
 
+typedef struct slist_data_s slist_data_t;
+struct slist_data_s
+{
+    pthread_t tid;
+    SLIST_ENTRY(slist_data_s) entries;
+};
+
 int main(int argc, char **argv)
 {
+    slist_data_t *datap = NULL;
+    SLIST_HEAD(slisthead, slist_data_s) head;
+    SLIST_INIT(&head);
+
     pthread_mutex_t mutex;
     pthread_mutex_init(&mutex, NULL);
 
@@ -180,10 +191,36 @@ int main(int argc, char **argv)
         {
             syslog(LOG_ERR, "pthread_create() error: %s", strerror(errno));
             continue;
-        }        
+        }
+        datap = malloc(sizeof(slist_data_t));
+        datap->tid = tid;
+        SLIST_INSERT_HEAD(&head, datap, entries);      
     }
 
     /// shutdown
+    int rc_join;
+    void *res = NULL;
+    
+    SLIST_FOREACH(datap, &head, entries)
+    {
+        rc_join = pthread_join(datap->tid, &res);
+        if(rc_join != 0)
+        {
+            syslog(LOG_ERR, "pthread_join() error: %s", strerror(errno));
+            continue;
+        }
+        syslog(LOG_ERR, "joined with thread %d; returned value was %s\n",
+               (int)datap->tid, (char *)res);
+        free(res);
+    }
+
+    while(!SLIST_EMPTY(&head))
+    {
+        datap = SLIST_FIRST(&head);
+        SLIST_REMOVE_HEAD(&head, entries);
+        free(datap);
+    }
+
     pthread_mutex_destroy(&mutex);
     shutdown(sockfd, SHUT_RDWR);
     close(pfd);
