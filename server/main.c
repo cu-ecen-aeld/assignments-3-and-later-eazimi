@@ -9,15 +9,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <time.h>
 #include "aesdsocket.h"
 #include "queue.h"
 
+#define SLEEP_SECS 10
 #define PORT 9000
 #define BUFF_SIZE 1024
 #define PCKT_SIZE 20 * 1024
 #define FILE_PATH "/var/tmp/aesdsocketdata"
 
-bool accept_conn_loop = true;
+bool loop = true;
 
 #define CHECK_EXIT_CONDITION(rc, func_name) \
     do                                      \
@@ -33,7 +35,7 @@ static void signal_handler(int signal_number)
     if ((signal_number == SIGINT) || (signal_number == SIGTERM))
     {
         syslog(LOG_INFO, "Caught signal, exiting");
-        accept_conn_loop = false;
+        loop = false;
     }
 }
 
@@ -42,6 +44,12 @@ struct thread_info
     pthread_mutex_t *mutex;
     int pfd;
     int connfd;
+};
+
+struct timer_thread_info
+{
+    pthread_mutex_t *mutex;
+    int pfd;
 };
 
 static void *thread_start(void *arg)
@@ -79,7 +87,35 @@ static void *thread_start(void *arg)
     } while (data_size > 0);
     pthread_mutex_unlock(tinfo->mutex);
 
-    return NULL;
+    return arg;
+}
+
+static void *timer_thread_start(void* arg)
+{
+    while(loop)
+    {
+        time_t rawTime;
+        struct tm *info;
+        char buffer[80];
+        time(&rawTime);
+
+        info = localtime(&rawTime);
+        strftime(buffer, 80, "%a, %d %b %Y %T %z", info);
+
+        int buffer_len = strlen(buffer);
+        buffer[buffer_len] = '\n';
+        buffer[buffer_len + 1] = '\0';
+
+        char msg[256];
+        sprintf(msg, "timestamp:%s", buffer);
+
+        struct timer_thread_info *ttinfo = (struct timer_thread_info *)arg;
+        pthread_mutex_lock(ttinfo->mutex);
+        write(ttinfo->pfd, (const void *)msg, strlen(msg));
+        pthread_mutex_unlock(ttinfo->mutex);
+        sleep(SLEEP_SECS);
+    }
+    return arg;
 }
 
 void _daemon()
@@ -160,7 +196,24 @@ int main(int argc, char **argv)
     int pfd = open(FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     CHECK_EXIT_CONDITION(pfd, "open_file");
 
-    while (accept_conn_loop)
+    struct timer_thread_info *ttinfo = (struct timer_thread_info *)malloc(sizeof(struct timer_thread_info));
+    if (ttinfo == NULL)
+    {
+        syslog(LOG_ERR, "Could not allocate memory for a timer_thread_info object");
+        return 0;
+    }
+    ttinfo->mutex = &mutex;
+    ttinfo->pfd = pfd;
+
+    pthread_t ttid;
+    int s = pthread_create(&ttid, NULL, timer_thread_start, (void *)ttinfo);
+    if (s != 0)
+    {
+        syslog(LOG_ERR, "pthread_create() error [timer thread]: %s", strerror(errno));
+        return 0;
+    }
+
+    while (loop)
     {
         struct sockaddr addr_cli;
         int connfd = accept_conn(sockfd, &addr_cli);
@@ -219,6 +272,8 @@ int main(int argc, char **argv)
         free(datap);
     }
 
+    pthread_join(ttid, &res);
+    free(res);
     pthread_mutex_destroy(&mutex);
     shutdown(sockfd, SHUT_RDWR);
     close(pfd);
