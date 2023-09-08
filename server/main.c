@@ -56,7 +56,6 @@ static void *thread_start(void *arg)
 {
     struct thread_info *tinfo = (struct thread_info *)arg;
 
-    pthread_mutex_lock(tinfo->mutex);
     while (true)
     {
         /// receive data - write to file
@@ -64,8 +63,10 @@ static void *thread_start(void *arg)
         memset((void *)recv_buff, 0, BUFF_SIZE + 1);
         int rc_recvdata = recv_data(tinfo->connfd, recv_buff, BUFF_SIZE);
         CHECK_EXIT_CONDITION(rc_recvdata, "recv_data");
-        
+
+        pthread_mutex_lock(tinfo->mutex);        
         int rc_writefile = write(tinfo->pfd, (const void *)recv_buff, rc_recvdata);
+        pthread_mutex_unlock(tinfo->mutex);
         CHECK_EXIT_CONDITION(rc_writefile, "write_file");
 
         char *pch = strstr(recv_buff, "\n");
@@ -78,14 +79,15 @@ static void *thread_start(void *arg)
     lseek(tinfo->pfd, 0L, SEEK_SET);
     do
     {
+        pthread_mutex_lock(tinfo->mutex);
         int rc_readfile = read(tinfo->pfd, send_buff, BUFF_SIZE);
+        pthread_mutex_unlock(tinfo->mutex);
         CHECK_EXIT_CONDITION(rc_readfile, "read_file");
         int rc_senddata = send_data(tinfo->connfd, send_buff, rc_readfile);
         CHECK_EXIT_CONDITION(rc_senddata, "send_data");
         data_size -= rc_readfile;
         memset(send_buff, 0, BUFF_SIZE);
     } while (data_size > 0);
-    pthread_mutex_unlock(tinfo->mutex);
 
     return arg;
 }
@@ -210,6 +212,7 @@ int main(int argc, char **argv)
     if (s != 0)
     {
         syslog(LOG_ERR, "pthread_create() error [timer thread]: %s", strerror(errno));
+        free(ttinfo);
         return 0;
     }
 
@@ -241,6 +244,7 @@ int main(int argc, char **argv)
         if (s != 0)
         {
             syslog(LOG_ERR, "pthread_create() error: %s", strerror(errno));
+            free(tinfo);
             continue;
         }
         datap = malloc(sizeof(slist_data_t));
@@ -255,14 +259,13 @@ int main(int argc, char **argv)
     SLIST_FOREACH(datap, &head, entries)
     {
         rc_join = pthread_join(datap->tid, &res);
+        free(res);
         if(rc_join != 0)
         {
             syslog(LOG_ERR, "pthread_join() error: %s", strerror(errno));
             continue;
         }
-        syslog(LOG_ERR, "joined with thread %d; returned value was %s\n",
-               (int)datap->tid, (char *)res);
-        free(res);
+        syslog(LOG_ERR, "joined with thread %d\n", (int)datap->tid);
     }
 
     while(!SLIST_EMPTY(&head))
