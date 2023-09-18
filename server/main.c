@@ -113,7 +113,9 @@ static void *timer_thread_start(void* arg)
 
         struct timer_thread_info *ttinfo = (struct timer_thread_info *)arg;
         pthread_mutex_lock(ttinfo->mutex);
-        write(ttinfo->pfd, (const void *)msg, strlen(msg));
+        ssize_t rc_write = write(ttinfo->pfd, (const void *)msg, strlen(msg));
+        CHECK_EXIT_CONDITION(rc_write, "write");
+    
         pthread_mutex_unlock(ttinfo->mutex);
         sleep(SLEEP_SECS);
     }
