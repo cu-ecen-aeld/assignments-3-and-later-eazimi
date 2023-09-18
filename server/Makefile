@@ -5,8 +5,8 @@ DEFAULT_CC = gcc
 # 	CC = $(CROSS_COMPILE)$(DEFAULT_CC)
 # endif
 
-CFLAGS = -Wall -Werror
-LDFLAGS = -pthread
+# CFLAGS = -Wall -Werror
+# LDFLAGS = -pthread
 
 SRCS = \
 	queue.h	\
