@@ -1,4 +1,5 @@
-DEFAULT_CC = gcc
+# DEFAULT_CC = gcc
+DEFAULT_CC = 
 CC = $(DEFAULT_CC)
 
 ifdef CROSS_COMPILE
