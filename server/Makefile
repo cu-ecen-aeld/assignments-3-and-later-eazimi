@@ -1,4 +1,4 @@
-DEFAULT_CC = g++
+DEFAULT_CC = gcc
 CC = $(DEFAULT_CC)
 
 ifdef CROSS_COMPILE
