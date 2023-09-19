@@ -249,7 +249,7 @@ int main(int argc, char **argv)
             free(tinfo);
             continue;
         }
-        datap = malloc(sizeof(slist_data_t));
+        datap = (slist_data_t *)malloc(sizeof(slist_data_t));
         datap->tid = tid;
         SLIST_INSERT_HEAD(&head, datap, entries);      
     }
