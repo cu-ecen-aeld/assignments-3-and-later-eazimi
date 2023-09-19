@@ -1,12 +1,12 @@
 DEFAULT_CC = gcc 
-# CC = $(DEFAULT_CC)
+CC = $(DEFAULT_CC)
 
-# ifdef CROSS_COMPILE
-# 	CC = $(CROSS_COMPILE)$(DEFAULT_CC)
-# endif
+ifdef CROSS_COMPILE
+	CC = $(CROSS_COMPILE)$(DEFAULT_CC)
+endif
 
-# CFLAGS = -Wall -Werror
-# LDFLAGS = -pthread
+CFLAGS = -Wall -Werror
+LDFLAGS = -pthread
 
 SRCS = \
 	queue.h	\
