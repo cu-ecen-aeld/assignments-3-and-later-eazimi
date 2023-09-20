@@ -1,44 +1,15 @@
-# DEFAULT_CC = gcc
-# CC = $(DEFAULT_CC)
+CC = $(CROSS_COMPILE)gcc
+LDFLAGS = -lpthread
+CFLAGS = -Wall -Werror -g
 
-# ifdef CROSS_COMPILE
-# 	CC = $(CROSS_COMPILE)$(DEFAULT_CC)
-# endif
+DEPS = aesdsocket.h queue.h
+OBJS = aesdsocket.o main.o
 
-# CFLAGS = -Wall -Werror
-# LDFLAGS = -pthread
+%o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-# SRCS = \
-# 	queue.h	\
-# 	aesdsocket.h \
-# 	aesdsocket.c \
-# 	main.c
-
-# OBJS = $(SRCS:.c=.o)
-
-# TARGET = aesdsocket
-
-# all: $(TARGET)
-		
-# %.o: %.c
-# 	$(CC) $(CFLAGS) -c $< -o $@
-
-# $(TARGET): $(OBJS)
-# 	$(CC) $(LDFLAGS) -o $@ $^
-
-# clean:
-# 	rm -f *.o $(TARGET)
-
-CC ?= $(CROSS_COMPILE)gcc
-LDFLAGS ?= -lpthread
-CFLAGS ?= Wall -Werror -O2 -g
-
-all: aesdsocket
-
-aesdsocket: aesdsocket.c
-	$(CC) $(CFLAGS) aesdsocket.c -o aesdsocket $(LDFLAGS)
-
-.PHONY: clean
+aesdsocket: $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -rf aesdsocket
+	rm -f *.o *~ core
