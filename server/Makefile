@@ -8,6 +8,8 @@ OBJS = aesdsocket.o main.o
 %o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+all: aesdsocket
+
 aesdsocket: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
