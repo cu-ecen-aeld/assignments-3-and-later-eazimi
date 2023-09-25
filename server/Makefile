@@ -1,6 +1,6 @@
 CC ?= $(CROSS_COMPILE)gcc
-LDFLAGS = -lpthread
-CFLAGS = -Wall -Werror -g
+LDFLAGS ?= -lpthread
+CFLAGS ?= -Wall -Werror -g
 
 DEPS = aesdsocket.h queue.h
 OBJS = aesdsocket.o main.o
