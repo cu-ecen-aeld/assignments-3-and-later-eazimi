@@ -1,4 +1,4 @@
-CC = $(CROSS_COMPILE)gcc
+CC = $(CROSS_COMPILE)
 LDFLAGS = -lpthread
 CFLAGS = -Wall -Werror -g
 
