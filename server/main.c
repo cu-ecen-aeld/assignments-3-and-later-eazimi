@@ -94,6 +94,7 @@ static void *thread_start(void *arg)
 
 static void *timer_thread_start(void* arg)
 {
+    struct timer_thread_info *ttinfo = (struct timer_thread_info *)arg;
     while(loop)
     {
         time_t rawTime;
@@ -111,12 +112,12 @@ static void *timer_thread_start(void* arg)
         char msg[256];
         sprintf(msg, "timestamp:%s", buffer);
 
-        struct timer_thread_info *ttinfo = (struct timer_thread_info *)arg;
         pthread_mutex_lock(ttinfo->mutex);
         ssize_t rc_write = write(ttinfo->pfd, (const void *)msg, strlen(msg));
-        CHECK_EXIT_CONDITION(rc_write, "write");
-    
         pthread_mutex_unlock(ttinfo->mutex);
+
+        CHECK_EXIT_CONDITION(rc_write, "write");
+        
         sleep(SLEEP_SECS);
     }
     return arg;
