@@ -82,7 +82,7 @@ static void *thread_start(void *arg)
         data_size -= rc_readfile;
         memset(send_buff, 0, BUFF_SIZE);
     } while (data_size > 0);
-    pthread_mutex_lock(tinfo->mutex);
+    pthread_mutex_unlock(tinfo->mutex);
     return arg;
 }
 
